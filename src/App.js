@@ -1,17 +1,16 @@
 import React, {Component} from 'react';
-import './App.scss';
-import Car from "./Car";
+import Layout from "./hoc/Layout/Layout";
 
-function App(props) {
-  return (
-    <div className="App">
-      <h1>{ props.title }</h1>
-        <Car name={'Audi'}/>
-        <Car name={'Ford'}>
-            <p>children element</p>
-        </Car>
-    </div>
-  );
-}
+class App extends Component {
+    render() {
+        return (
+            <Layout>
+                <div style={{width: 400, border: '1px solid black'}}>
+                    <h1>Layout</h1>
+                </div>
+            </Layout>
+            )
+        }
+    }
 
 export default App;
