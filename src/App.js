@@ -1,11 +1,11 @@
-import React from 'react';
-import './App.css';
+import React, {Component} from 'react';
+import './App.scss';
 import Car from "./Car";
 
-function App() {
+function App(props) {
   return (
     <div className="App">
-      <h1>hello react</h1>
+      <h1>{ props.title }</h1>
         <Car name={'Audi'}/>
         <Car name={'Ford'}>
             <p>children element</p>
