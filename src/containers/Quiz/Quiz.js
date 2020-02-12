@@ -2,6 +2,8 @@ import React, { Component } from "react";
 import classes from './Quiz.scss';
 import ActiveQuiz from "../../components/ActiveQuiz/ActiveQuiz";
 import FinishedQuiz from "../../components/FinishedQiuz/FinishedQuiz";
+import Axios from "../../Axios/Axios-quiz";
+import Loader from "../../components/UI/Loader/Loader";
 
 class Quiz extends Component {
     state = {
@@ -9,30 +11,8 @@ class Quiz extends Component {
         isFinished: false,
         activeQuestion: 0,
         answerState: null,
-        quiz: [
-            {
-              question: 'Какого цвета небо?',
-              rightAnswerId: 2,
-              id: 1,
-              answers: [
-                  {text: 'Чорний', id: 1},
-                  {text: 'Синий', id: 2},
-                  {text: 'Красний', id: 3},
-                  {text: 'Зелений', id: 4},
-              ]
-            },
-            {
-                question: 'В каком году основали Санкт Петербург',
-                rightAnswerId: 4,
-                id: 2,
-                answers: [
-                    {text: '1700', id: 1},
-                    {text: '1725', id: 2},
-                    {text: '1900', id: 3},
-                    {text: '1703', id: 4},
-                ]
-            }
-        ]
+        quiz: [],
+        loading: true
     };
     onAnswerClickHandler = answerId => {
         if (this.state.answerState) {
@@ -89,28 +69,45 @@ class Quiz extends Component {
             results: {}
         })
     }
+    async componentDidMount() {
+            try {
+                const response =   await Axios.get(`/quizes/${this.props.match.params.id}.json`)
+                const quiz = response.data
+
+                this.setState({
+                    quiz,
+                    loading: false
+                })
+            }catch (e) {
+                console.log(e)
+            }
+    }
 
     render() {
         return (
             <div className={classes.Quiz}>
                 <div className={classes.QuizWrapper}>
                     <h1>Отетьте на все вопроси</h1>
+
                     {
-                    this.state.isFinished
-                    ? <FinishedQuiz
-                        results={this.state.results}
-                        quiz={this.state.quiz}
-                        onRetry={this.retryHandler}
-                        />
-                    :  <ActiveQuiz
-                            answers={this.state.quiz[this.state.activeQuestion].answers}
-                            qustion={this.state.quiz[this.state.activeQuestion].question}
-                            onAnswerClick={this.onAnswerClickHandler}
-                            quiezLength={this.state.quiz.length}
-                            answerNumber={this.state.activeQuestion + 1}
-                            state={this.state.answerState}
-                        />
+                        this.state.loading
+                        ? <Loader/>
+                        :  this.state.isFinished
+                            ? <FinishedQuiz
+                                results={this.state.results}
+                                quiz={this.state.quiz}
+                                onRetry={this.retryHandler}
+                            />
+                            :  <ActiveQuiz
+                                answers={this.state.quiz[this.state.activeQuestion].answers}
+                                qustion={this.state.quiz[this.state.activeQuestion].question}
+                                onAnswerClick={this.onAnswerClickHandler}
+                                quiezLength={this.state.quiz.length}
+                                answerNumber={this.state.activeQuestion + 1}
+                                state={this.state.answerState}
+                            />
                     }
+
                 </div>
             </div>
         )
