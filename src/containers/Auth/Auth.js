@@ -3,6 +3,7 @@ import classes from './Auth.scss'
 import Button from "../../components/UI/Button/Button";
 import Input from "../../components/UI/Input/Input";
 import is from 'is_js'
+import Axios from "axios";
 
 export default class Auth extends Component {
 
@@ -36,12 +37,32 @@ export default class Auth extends Component {
       }
     };
 
-    loginHAndler = () => {
-
+    loginHandler = async () => {
+        const authData = {
+            email: this.state.formControls.email.value,
+            password: this.state.formControls.password.value,
+            returnSecureToken: true
+        }
+        try {
+            const response = await Axios.post('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyD_vFbt3vDcqv5eT6MGiQ_qjXDjrEUIWNY', authData)
+            console.log(response.data)
+        }catch (e) {
+            console.log(e)
+        }
     };
 
-    registerHAndler = () => {
-
+    registerHandler = async () => {
+        const authData = {
+            email: this.state.formControls.email.value,
+            password: this.state.formControls.password.value,
+            returnSecureToken: true
+        }
+        try {
+            const response = await Axios.post('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyD_vFbt3vDcqv5eT6MGiQ_qjXDjrEUIWNY', authData)
+            console.log(response.data)
+        }catch (e) {
+            console.log(e)
+        }
     };
 
     submitHandler = event => {
@@ -121,13 +142,13 @@ export default class Auth extends Component {
                         }
 
                         <Button type="success"
-                                ocClick={this.loginHAndler}
+                                onClick={this.loginHandler}
                                 disabled={!this.state.isFormValid}
                                 >
                             Войти
                         </Button>
                         <Button type="primary"
-                                ocClick={this.registerHAndler}
+                                onClick={this.registerHandler}
                                 disabled={!this.state.isFormValid}
                         >
                             Зарегистрироваться
