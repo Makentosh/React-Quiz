@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import classes from './Quiz.scss';
 import ActiveQuiz from "../../components/ActiveQuiz/ActiveQuiz";
 import FinishedQuiz from "../../components/FinishedQiuz/FinishedQuiz";
-import Axios from "../../Axios/Axios-quiz";
+import axios from "../../Axios/Axios-quiz";
 import Loader from "../../components/UI/Loader/Loader";
 
 class Quiz extends Component {
@@ -71,7 +71,7 @@ class Quiz extends Component {
     }
     async componentDidMount() {
             try {
-                const response =   await Axios.get(`/quizes/${this.props.match.params.id}.json`)
+                const response =   await axios.get(`/quizes/${this.props.match.params.id}.json`)
                 const quiz = response.data
 
                 this.setState({

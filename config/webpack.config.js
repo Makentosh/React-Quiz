@@ -59,50 +59,40 @@ module.exports = function(webpackEnv) {
   const isEnvProductionProfile =
     isEnvProduction && process.argv.includes('--profile');
 
-  // Webpack uses `publicPath` to determine where the app is being served from.
-  // It requires a trailing slash, or the file assets will get an incorrect path.
-  // In development, we always serve from the root. This makes config easier.
-  const publicPath = isEnvProduction
-    ? paths.servedPath
-    : isEnvDevelopment && '/';
-  // Some apps do not use client-side routing with pushState.
-  // For these, "homepage" can be set to "." to enable relative asset paths.
-  const shouldUseRelativeAssetPaths = publicPath === './';
-
-  // `publicUrl` is just like `publicPath`, but we will provide it to our app
+  // We will provide `paths.publicUrlOrPath` to our app
   // as %PUBLIC_URL% in `index.html` and `process.env.PUBLIC_URL` in JavaScript.
   // Omit trailing slash as %PUBLIC_URL%/xyz looks better than %PUBLIC_URL%xyz.
-  const publicUrl = isEnvProduction
-    ? publicPath.slice(0, -1)
-    : isEnvDevelopment && '';
   // Get environment variables to inject into our app.
-  const env = getClientEnvironment(publicUrl);
+  const env = getClientEnvironment(paths.publicUrlOrPath.slice(0, -1));
 
   // common function to get style loaders
   const getStyleLoaders = (cssOptions, preProcessor) => {
     const loaders = [
-      isEnvDevelopment && require.resolve('style-Loader'),
+      isEnvDevelopment && require.resolve('style-loader'),
       isEnvProduction && {
         loader: MiniCssExtractPlugin.loader,
-        options: shouldUseRelativeAssetPaths ? { publicPath: '../../' } : {
-          modules: {
-            localIdentName: "[name]__[local]--[hash:base64:5]",
-          },
-        },
+        // css is located in `static/css`, use '../../' to locate index.html folder
+        // in production `paths.publicUrlOrPath` can be a relative path
+        options: paths.publicUrlOrPath.startsWith('.')
+          ? { publicPath: '../../' }
+          : {
+              modules: true,
+              localIdentName: "[name]__[local]--[hash:base64:5]",
+            },
       },
       {
-        loader: require.resolve('css-Loader'),
+        loader: require.resolve('css-loader'),
         options: {
           modules: {
-                localIdentName: "[name]__[local]--[hash:base64:5]",
-            },
-        }
+            localIdentName: "[name]__[local]--[hash:base64:5]"
+            }
+        },
       },
       {
         // Options for PostCSS as we reference these options twice
         // Adds vendor prefixing based on your specified browser support in
         // package.json
-        loader: require.resolve('postcss-Loader'),
+        loader: require.resolve('postcss-loader'),
         options: {
           // Necessary for external CSS imports to work
           // https://github.com/facebook/create-react-app/issues/2677
@@ -127,7 +117,7 @@ module.exports = function(webpackEnv) {
     if (preProcessor) {
       loaders.push(
         {
-          loader: require.resolve('resolve-url-Loader'),
+          loader: require.resolve('resolve-url-loader'),
           options: {
             sourceMap: isEnvProduction && shouldUseSourceMap,
           },
@@ -189,9 +179,10 @@ module.exports = function(webpackEnv) {
       chunkFilename: isEnvProduction
         ? 'static/js/[name].[contenthash:8].chunk.js'
         : isEnvDevelopment && 'static/js/[name].chunk.js',
+      // webpack uses `publicPath` to determine where the app is being served from.
+      // It requires a trailing slash, or the file assets will get an incorrect path.
       // We inferred the "public path" (such as / or /my-project) from homepage.
-      // We use "/" in development.
-      publicPath: publicPath,
+      publicPath: paths.publicUrlOrPath,
       // Point sourcemap entries to original disk location (format as URL on Windows)
       devtoolModuleFilenameTemplate: isEnvProduction
         ? info =>
@@ -200,7 +191,7 @@ module.exports = function(webpackEnv) {
               .replace(/\\/g, '/')
         : isEnvDevelopment &&
           (info => path.resolve(info.absoluteResourcePath).replace(/\\/g, '/')),
-      // Prevents conflicts when multiple Webpack runtimes (from different apps)
+      // Prevents conflicts when multiple webpack runtimes (from different apps)
       // are used on the same page.
       jsonpFunction: `webpackJsonp${appPackageJson.name}`,
       // this defaults to 'window', but by setting it to 'this' then
@@ -267,8 +258,8 @@ module.exports = function(webpackEnv) {
               : false,
           },
           cssProcessorPluginOptions: {
-              preset: ['default', { minifyFontValues: { removeQuotes: false } }]
-          }
+            preset: ['default', { minifyFontValues: { removeQuotes: false } }],
+          },
         }),
       ],
       // Automatically split vendor and commons
@@ -286,7 +277,7 @@ module.exports = function(webpackEnv) {
       },
     },
     resolve: {
-      // This allows you to set a fallback for where Webpack should look for modules.
+      // This allows you to set a fallback for where webpack should look for modules.
       // We placed these paths second because we want `node_modules` to "win"
       // if there are any conflicts. This matches Node resolution mechanism.
       // https://github.com/facebook/create-react-app/issues/253
@@ -327,7 +318,7 @@ module.exports = function(webpackEnv) {
     },
     resolveLoader: {
       plugins: [
-        // Also related to Plug'n'Play, but this time it tells Webpack to load its loaders
+        // Also related to Plug'n'Play, but this time it tells webpack to load its loaders
         // from the current package.
         PnpWebpackPlugin.moduleLoader(module),
       ],
@@ -352,22 +343,22 @@ module.exports = function(webpackEnv) {
                 resolvePluginsRelativeTo: __dirname,
 
               },
-              loader: require.resolve('eslint-Loader'),
+              loader: require.resolve('eslint-loader'),
             },
           ],
           include: paths.appSrc,
         },
         {
           // "oneOf" will traverse all following loaders until one will
-          // match the requirements. When no Loader matches it will fall
-          // back to the "file" Loader at the end of the Loader list.
+          // match the requirements. When no loader matches it will fall
+          // back to the "file" loader at the end of the loader list.
           oneOf: [
-            // "url" Loader works like "file" Loader except that it embeds assets
+            // "url" loader works like "file" loader except that it embeds assets
             // smaller than specified limit in bytes as data URLs to avoid requests.
             // A missing `test` is equivalent to a match.
             {
               test: [/\.bmp$/, /\.gif$/, /\.jpe?g$/, /\.png$/],
-              loader: require.resolve('url-Loader'),
+              loader: require.resolve('url-loader'),
               options: {
                 limit: imageInlineSizeLimit,
                 name: 'static/media/[name].[hash:8].[ext]',
@@ -378,7 +369,7 @@ module.exports = function(webpackEnv) {
             {
               test: /\.(js|mjs|jsx|ts|tsx)$/,
               include: paths.appSrc,
-              loader: require.resolve('babel-Loader'),
+              loader: require.resolve('babel-loader'),
               options: {
                 customize: require.resolve(
                   'babel-preset-react-app/webpack-overrides'
@@ -397,8 +388,8 @@ module.exports = function(webpackEnv) {
                     },
                   ],
                 ],
-                // This is a feature of `babel-Loader` for webpack (not Babel itself).
-                // It enables caching results in ./node_modules/.cache/babel-Loader/
+                // This is a feature of `babel-loader` for webpack (not Babel itself).
+                // It enables caching results in ./node_modules/.cache/babel-loader/
                 // directory for faster rebuilds.
                 cacheDirectory: true,
                 // See #6846 for context on why cacheCompression is disabled
@@ -411,7 +402,7 @@ module.exports = function(webpackEnv) {
             {
               test: /\.(js|mjs)$/,
               exclude: /@babel(?:\/|\\{1,2})runtime/,
-              loader: require.resolve('babel-Loader'),
+              loader: require.resolve('babel-loader'),
               options: {
                 babelrc: false,
                 configFile: false,
@@ -433,11 +424,11 @@ module.exports = function(webpackEnv) {
                 inputSourceMap: shouldUseSourceMap,
               },
             },
-            // "postcss" Loader applies autoprefixer to our CSS.
-            // "css" Loader resolves paths in CSS and adds assets as dependencies.
-            // "style" Loader turns CSS into JS modules that inject <style> tags.
+            // "postcss" loader applies autoprefixer to our CSS.
+            // "css" loader resolves paths in CSS and adds assets as dependencies.
+            // "style" loader turns CSS into JS modules that inject <style> tags.
             // In production, we use MiniCSSExtractPlugin to extract that CSS
-            // to a file, but in development "style" Loader enables hot editing
+            // to a file, but in development "style" loader enables hot editing
             // of CSS.
             // By default we support CSS Modules with the extension .module.css
             {
@@ -476,7 +467,7 @@ module.exports = function(webpackEnv) {
                   importLoaders: 3,
                   sourceMap: isEnvProduction && shouldUseSourceMap,
                 },
-                'sass-Loader'
+                'sass-loader'
               ),
               // Don't consider CSS imports dead code even if the
               // containing package claims to have no side effects.
@@ -496,18 +487,18 @@ module.exports = function(webpackEnv) {
                     getLocalIdent: getCSSModuleLocalIdent,
                   },
                 },
-                'sass-Loader'
+                'sass-loader'
               ),
             },
-            // "file" Loader makes sure those assets get served by WebpackDevServer.
+            // "file" loader makes sure those assets get served by WebpackDevServer.
             // When you `import` an asset, you get its (virtual) filename.
             // In production, they would get copied to the `build` folder.
-            // This Loader doesn't use a "test" so it will catch all modules
+            // This loader doesn't use a "test" so it will catch all modules
             // that fall through the other loaders.
             {
-              loader: require.resolve('file-Loader'),
-              // Exclude `js` files to keep "css" Loader working as it injects
-              // its runtime that would otherwise be processed through "file" Loader.
+              loader: require.resolve('file-loader'),
+              // Exclude `js` files to keep "css" loader working as it injects
+              // its runtime that would otherwise be processed through "file" loader.
               // Also exclude `html` and `json` extensions so they get processed
               // by webpacks internal loaders.
               exclude: [/\.(js|mjs|jsx|ts|tsx)$/, /\.html$/, /\.json$/],
@@ -515,8 +506,8 @@ module.exports = function(webpackEnv) {
                 name: 'static/media/[name].[hash:8].[ext]',
               },
             },
-            // ** STOP ** Are you adding a new Loader?
-            // Make sure to add the new Loader(s) before the "file" Loader.
+            // ** STOP ** Are you adding a new loader?
+            // Make sure to add the new loader(s) before the "file" loader.
           ],
         },
       ],
@@ -557,9 +548,8 @@ module.exports = function(webpackEnv) {
       // Makes some environment variables available in index.html.
       // The public URL is available as %PUBLIC_URL% in index.html, e.g.:
       // <link rel="icon" href="%PUBLIC_URL%/favicon.ico">
-      // In production, it will be an empty string unless you specify "homepage"
+      // It will be an empty string unless you specify "homepage"
       // in `package.json`, in which case it will be the pathname of that URL.
-      // In development, this will be an empty string.
       new InterpolateHtmlPlugin(HtmlWebpackPlugin, env.raw),
       // This gives some necessary context to module not found errors, such as
       // the requesting resource.
@@ -577,7 +567,7 @@ module.exports = function(webpackEnv) {
       // See https://github.com/facebook/create-react-app/issues/240
       isEnvDevelopment && new CaseSensitivePathsPlugin(),
       // If you require a missing module and then `npm install` it, you still have
-      // to restart the development server for Webpack to discover it. This plugin
+      // to restart the development server for webpack to discover it. This plugin
       // makes the discovery automatic so you don't have to restart.
       // See https://github.com/facebook/create-react-app/issues/186
       isEnvDevelopment &&
@@ -597,7 +587,7 @@ module.exports = function(webpackEnv) {
       //   can be used to reconstruct the HTML if necessary
       new ManifestPlugin({
         fileName: 'asset-manifest.json',
-        publicPath: publicPath,
+        publicPath: paths.publicUrlOrPath,
         generate: (seed, files, entrypoints) => {
           const manifestFiles = files.reduce((manifest, file) => {
             manifest[file.name] = file.path;
@@ -614,19 +604,19 @@ module.exports = function(webpackEnv) {
         },
       }),
       // Moment.js is an extremely popular library that bundles large locale files
-      // by default due to how Webpack interprets its code. This is a practical
+      // by default due to how webpack interprets its code. This is a practical
       // solution that requires the user to opt into importing specific locales.
       // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
       // You can remove this if you don't use Moment.js:
       new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
       // Generate a service worker script that will precache, and keep up to date,
-      // the HTML & assets that are part of the Webpack build.
+      // the HTML & assets that are part of the webpack build.
       isEnvProduction &&
         new WorkboxWebpackPlugin.GenerateSW({
           clientsClaim: true,
           exclude: [/\.map$/, /asset-manifest\.json$/],
           importWorkboxFrom: 'cdn',
-          navigateFallback: publicUrl + '/index.html',
+          navigateFallback: paths.publicUrlOrPath + 'index.html',
           navigateFallbackBlacklist: [
             // Exclude URLs starting with /_, as they're likely an API call
             new RegExp('^/_'),
@@ -666,7 +656,7 @@ module.exports = function(webpackEnv) {
         }),
     ].filter(Boolean),
     // Some libraries import Node modules but don't use them in the browser.
-    // Tell Webpack to provide empty mocks for them so importing them works.
+    // Tell webpack to provide empty mocks for them so importing them works.
     node: {
       module: 'empty',
       dgram: 'empty',
